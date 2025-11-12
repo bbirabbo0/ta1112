@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>학교 세균 위험도 예측기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #fff7fb;
+      --point: #ff7fbf;
+      --point-soft: #ffe3f4;
+      --text-main: #222222;
+      --text-sub: #777888;
+      --radius: 22px;
+      --shadow: 0 10px 30px rgba(255, 153, 204, 0.25);
+      --font: system-ui, -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font);
+      background:
+        radial-gradient(circle at top left, #ffe6f4 0, transparent 55%),
+        radial-gradient(circle at top right, #e6fbff 0, transparent 55%),
+        var(--bg);
+      min-height: 100vh;
+      padding: 26px 14px;
+      display: flex;
+      justify-content: center;
+      color: var(--text-main);
+    }
+    .wrap { width: 100%; max-width: 1080px; margin: auto; }
+
+    .top-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 11px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid #ffd6f0;
+      font-size: 11px;
+      color: var(--text-sub);
+      box-shadow: 0 4px 14px rgba(255, 183, 216, 0.4);
+      margin-bottom: 8px;
+    }
+    .top-label span.dot {
+      width: 7px; height: 7px; border-radius: 999px; background: var(--point);
+    }
+
+    h1 {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    h1 span.highlight { color: var(--point); }
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(260px, 2fr);
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: var(--radius);
+      padding: 16px 16px 14px;
+      border: 1px solid #ffe0f2;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .card-title span.emoji { font-size: 18px; }
+    .card-desc {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-bottom: 10px;
+    }
+    .badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--point-soft);
+      color: var(--point);
+      font-size: 9px;
+      display: inline-block;
+      margin-left: 2px;
+    }
+
+    label {
+      display: block;
+      font-size: 10px;
+      color: var(--text-sub);
+      margin: 4px 0 2px;
+    }
+    select, input[type="number"] {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 14px;
+      border: 1px solid #ffe3f5;
+      background: #fffafd;
+      font-size: 12px;
+      outline: none;
+      transition: 0.18s;
+      margin-bottom: 4px;
+    }
+    select:focus, input[type="number"]:focus {
+      border-color: var(--point);
+      box-shadow: 0 0 0 2px rgba(255, 127, 191, 0.16);
+      background: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    button {
+      width: 100%;
+      padding: 9px 10px;
+      margin-top: 6px;
+      border-radius: 18px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+      color: #ffffff;
+      background: linear-gradient(90deg, #ff9ecd, #ffc96a);
+      box-shadow: 0 10px 24px rgba(255, 153, 204, 0.45);
+      transition: 0.18s;
+    }
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(1px) scale(0.98); }
+
+    .result-box {
+      margin-top: 9px;
+      padding: 9px 10px 7px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #fff8fd, #ffe9f6);
+      border: 1px solid #ffd7ec;
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+    .result-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      margin-bottom: 2px;
+    }
+    .result-main {
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .tag {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      margin-left: 4px;
+      text-transform: uppercase;
+    }
+    .tag-high { background: #ffe0dd; color: #e11d48; }
+    .tag-mid { background: #fff2c2; color: #ea580c; }
+    .tag-low { background: #dcfce7; color: #16a34a; }
+
+    .side-list {
+      list-style: none;
+      font-size: 10px;
+      color: var(--text-sub);
+      display: grid;
+      gap: 4px;
+      margin: 6px 0 8px;
+    }
+    .side-list b { color: var(--point); }
+
+    .side-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #fff9ff;
+      border: 1px solid #ffe3f5;
+      font-size: 8px;
+      color: var(--text-sub);
+    }
+    .side-tag span.dot {
+      width: 6px; height: 6px;
+      border-radius: 999px;
+      background: #8be3d9;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-label">
+      <span class="dot"></span>
+      진공탐프 · 세균 실험 × AI 활용 프로젝트
+    </div>
+    <h1>학교 <span class="highlight">세균 위험도</span> 예측기</h1>
+    <p class="subtitle">
+      실제로 우리가 채취·배양한 세균 데이터와 가상의 학교 환경 데이터를 학습시킨
+      <b>Logistic Regression 기반 AI</b>로, 장소 조건을 입력하면 예상 위험도를 보여주는 웹앱입니다.
+    </p>
+
+    <div class="grid">
+      <!-- 입력 영역 -->
+      <div class="card">
+        <div class="card-title">
+          <span class="emoji">🔍</span> 오늘의 환경 입력하기
+          <span class="badge">Logistic Regression 모델 사용</span>
+        </div>
+        <div class="card-desc">
+          교내 여러 장소에서 수집한 조건(사람 왕래, 손 접촉, 청결, 습도, 집락 수)을 기반으로
+          <b>high / mid / low</b> 위험도를 예측합니다.
+        </div>
+
+        <label>장소 유형</label>
+        <select id="place_type">
+          <option value="화장실">화장실</option>
+          <option value="출입문">출입문</option>
+          <option value="복도">복도</option>
+          <option value="교실">교실</option>
+          <option value="공용기기">공용기기</option>
+          <option value="기타">기타</option>
+        </select>
+
+        <label>사람 왕래</label>
+        <select id="people_level">
+          <option value="low">low</option>
+          <option value="mid">mid</option>
+          <option value="high">high</option>
+        </select>
+
+        <label>손 접촉 정도</label>
+        <select id="touch_level">
+          <option value="low">low</option>
+          <option value="mid">mid</option>
+          <option value="high">high</option>
+        </select>
+
+        <label>청결 상태</label>
+        <select id="clean_level">
+          <option value="low">low</option>
+          <option value="mid">mid</option>
+          <option value="high">high</option>
+        </select>
+
+        <label>습도</label>
+        <select id="humidity_level">
+          <option value="low">low</option>
+          <option value="mid">mid</option>
+          <option value="high">high</option>
+        </select>
+
+        <label>균 집락 수 (CFU, 대략값)</label>
+        <input id="colonies" type="number" min="0" step="10" value="200" />
+
+        <button onclick="predictRisk()">위험도 예측하기</button>
+
+        <div class="result-box">
+          <div class="result-label">📊 예측 결과</div>
+          <div id="result" class="result-main">입력 후 버튼을 눌러주세요</div>
+          <div id="detail"></div>
+        </div>
+
+        <p class="card-desc" style="margin-top:6px;">
+          이 모델은 <b>학습용 AI</b>로, 실제 방역 기준을 대신하지 않습니다.
+          어떤 구역을 더 집중적으로 관리하면 좋을지 참고용으로만 활용하세요.
+        </p>
+      </div>
+
+      <!-- 설명 영역 -->
+      <div class="card">
+        <div class="card-title">
+          <span class="emoji">🧪</span> 이 웹앱, 어떻게 만든 거예요?
+        </div>
+        <ul class="side-list">
+          <li>① 교내 여러 지점을 면봉으로 채취해 배지에서 <b>세균 집락 수</b>를 측정했습니다.</li>
+          <li>② 각 지점의 <b>장소 유형, 사람 왕래, 손 접촉, 청결, 습도</b>를 정리해 데이터셋을 만들었습니다.</li>
+          <li>③ 이 데이터를 이용해 Python에서 <b>Logistic Regression</b> 모델을 학습시켰습니다.</li>
+          <li>④ 학습된 모델(<code>risk_model.pkl</code>)을 Flask 서버에 올리고,
+            이 화면(HTML/CSS/JS)과 연결하여 <b>세균 위험도 예측기</b>를 완성했습니다.</li>
+        </ul>
+        <div class="side-tag">
+          <span class="dot"></span>
+          세균 배양 실험 + 데이터 분석 + AI까지 직접 경험한 진로 공동체 탐구 활동 결과물
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function predictRisk() {
+      const data = {
+        place_type: document.getElementById("place_type").value,
+        people_level: document.getElementById("people_level").value,
+        touch_level: document.getElementById("touch_level").value,
+        clean_level: document.getElementById("clean_level").value,
+        humidity_level: document.getElementById("humidity_level").value,
+        colonies: Number(document.getElementById("colonies").value || 0)
+      };
+
+      try {
+        const res = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const json = await res.json();
+        const resultEl = document.getElementById("result");
+        const detailEl = document.getElementById("detail");
+
+        if (json.error) {
+          resultEl.textContent = "오류: " + json.error;
+          resultEl.className = "result-main";
+          detailEl.textContent = "";
+          return;
+        }
+
+        const label = (json.risk_label || "").toLowerCase();
+        const conf = typeof json.confidence === "number"
+          ? (json.confidence * 100).toFixed(1)
+          : null;
+
+        let tagClass = "tag-low";
+        let text = "low";
+        if (label === "high") { tagClass = "tag-high"; text = "high"; }
+        else if (label === "mid") { tagClass = "tag-mid"; text = "mid"; }
+
+        resultEl.innerHTML = `예측 위험도:
+          <span class="tag ${tagClass}">${text}</span>`;
+        detailEl.textContent = conf
+          ? `학습 데이터 기준 약 ${conf}% 신뢰도로 이렇게 분류되었습니다.`
+          : "";
+      } catch (e) {
+        const resultEl = document.getElementById("result");
+        const detailEl = document.getElementById("detail");
+        resultEl.textContent = "서버와 통신하는 중 문제가 생겼어요.";
+        resultEl.className = "result-main";
+        detailEl.textContent = "";
+      }
+    }
+  </script>
+</body>
+</html>
